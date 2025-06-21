@@ -10,32 +10,23 @@ on:
 jobs:
   sonarcloud:
     name: SonarCloud Scan
-    runs-on: windows-latest
+    runs-on: ubuntu-latest  # You can use windows-latest if you prefer
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for accurate analysis
 
-      - name: Download SonarScanner
-        run: |
-          $version = "5.0.1.3006"
-          $url = "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$version-windows.zip"
-          Invoke-WebRequest -Uri $url -OutFile sonar-scanner.zip
-          Expand-Archive -Path sonar-scanner.zip -DestinationPath .
-          Rename-Item -Path "sonar-scanner-$version-windows" -NewName "sonar-scanner"
-
-      - name: Add SonarScanner to PATH
-        run: |
-          $scannerPath = (Resolve-Path "sonar-scanner\bin").Path
-          echo "::add-path::$scannerPath"
-
-      - name: Run SonarScanner
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Must match your GitHub secret name
-        run: |
-          sonar-scanner.bat `
-            -D"sonar.organization=cyruscrystos" `
-            -D"sonar.projectKey=CyrusCrystos_TimeStamping" `
-            -D"sonar.sources=." `
-            -D"sonar.host.url=https://sonarcloud.io"
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.organization=cyruscrystos
+            -Dsonar.projectKey=CyrusCrystos_TimeStamping
+            -Dsonar.sources=.
+            -Dsonar.c.file.suffixes=-
+            -Dsonar.cpp.file.suffixes=-
+            -Dsonar.objc.file.suffixes=-
